@@ -28,19 +28,9 @@ Um piano virtual para navegador com suporte a **autoplay por partitura de texto*
 
 Baixe o arquivo `piano-virtual.html` e abra diretamente no navegador. Nenhuma instalação necessária.
 
-### Opção 2 — Hospedar online (grátis)
+### Opção 2 — Acesse online
 
-**Netlify Drop** — mais rápido, menos de 1 minuto:
-1. Acesse [app.netlify.com/drop](https://app.netlify.com/drop)
-2. Arraste o arquivo `piano-virtual.html` para a página
-3. Pronto — você recebe uma URL pública como `https://seu-piano.netlify.app`
-
-**GitHub Pages:**
-1. Crie um repositório público no GitHub
-2. Renomeie o arquivo para `index.html` e faça o upload
-3. Vá em *Settings → Pages → Deploy from branch → main*
-4. Aguarde alguns segundos e acesse `https://seu-usuario.github.io/nome-do-repositorio`
-
+https://effervescent-licorice-3a343b.netlify.app/
 ---
 
 ## 🎵 Guia de Notação
