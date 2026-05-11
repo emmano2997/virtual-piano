@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎹 Virtual Piano — Partitura Interativa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ivory: #f5f0e8;
+    --ivory-hover: #ede5d0;
+    --ebony: #1a1a1a;
+    --pressed-w: #c8b89a;
+    --pressed-b: #7a6030;
+    --bg: #0c0c0e;
+    --panel: #141418;
+    --panel2: #1a1a1f;
+    --border: #2a2a32;
+    --border2: #38383f;
+    --accent: #c9a84c;
+    --accent2: #e8c97a;
+    --accent-dim: rgba(201,168,76,0.15);
+    --text: #e8e0d0;
+    --muted: #666;
+    --muted2: #888;
+    --red: #d44;
+    --green: #4aaa88;
+    --shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% 0%, rgba(201,168,76,0.06) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.01) 40px, rgba(255,255,255,0.01) 41px),
+      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.01) 40px, rgba(255,255,255,0.01) 41px);
+  }
+
+  header {
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+    position: relative;
+  }
+  header::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 1rem auto 0;
+  }
+
+  .title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 40px rgba(201,168,76,0.3);
+  }
+  .subtitle {
+    font-size: 0.7rem;
+    color: var(--muted2);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+  }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 1rem 3rem;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+  }
+
+  .panel-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .panel-label::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 10px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  textarea {
+    width: 100%;
+    background: #09090c;
+    color: var(--accent2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.7;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 0.02em;
+  }
+  textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+  textarea::placeholder { color: var(--muted); }
+
+  .controls {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 0.9rem;
+  }
+
+  button {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 0.45rem 1rem;
+    border-radius: 7px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  button:active { transform: scale(0.97); }
+
+  button.primary { border-color: var(--accent); color: var(--accent); }
+  button.primary:hover { background: var(--accent); color: #000; }
+  button.danger { border-color: #993; color: #cc9; }
+  button.danger:hover { border-color: var(--red); color: var(--red); background: rgba(221,68,68,0.1); }
+
+  .bpm-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-left: auto;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.3rem 0.8rem;
+  }
+  .bpm-row label { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.1em; }
+  .bpm-row input[type=range] {
+    width: 90px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .bpm-val { font-size: 0.82rem; color: var(--accent2); min-width: 36px; font-weight: 500; }
+
+  .volume-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.3rem 0.8rem;
+  }
+  .volume-row label { font-size: 0.68rem; color: var(--muted); }
+  .volume-row input[type=range] { width: 70px; accent-color: var(--accent2); }
+  .vol-val { font-size: 0.8rem; color: var(--muted2); min-width: 28px; }
+
+  .status-bar {
+    height: 36px;
+    background: #09090c;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.73rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; transition: background 0.2s; }
+  .status-dot.playing { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 1s ease-in-out infinite; }
+  .status-dot.paused { background: var(--muted); }
+  .status-dot.done { background: var(--green); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .status-state { color: var(--text); font-size: 0.72rem; }
+  .status-note { color: var(--accent2); font-weight: 500; min-width: 100px; }
+  .status-chord-tag {
+    font-size: 0.65rem;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 4px;
+    padding: 1px 6px;
+    letter-spacing: 0.05em;
+  }
+  .status-idx { margin-left: auto; color: var(--muted); }
+
+  .prog-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .prog-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0;
+    transition: width 0.15s linear;
+    border-radius: 99px;
+  }
+
+  /* ── Piano ── */
+  .piano-panel { overflow: hidden; }
+  .piano-wrap { overflow-x: auto; padding-bottom: 0.5rem; }
+  .piano-wrap::-webkit-scrollbar { height: 4px; }
+  .piano-wrap::-webkit-scrollbar-track { background: var(--border); border-radius: 2px; }
+  .piano-wrap::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+  .piano {
+    display: inline-flex;
+    position: relative;
+    height: 150px;
+    gap: 1.5px;
+    padding-top: 2px;
+  }
+
+  .key-w {
+    width: 38px;
+    height: 140px;
+    background: var(--ivory);
+    border-radius: 0 0 6px 6px;
+    border: 1px solid #b8b0a0;
+    border-top: 2px solid #d4ccc0;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.05s, transform 0.05s;
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.1);
+  }
+  .key-w:hover { background: var(--ivory-hover); }
+  .key-w:active, .key-w.active {
+    background: var(--pressed-w) !important;
+    transform: translateY(2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+
+  .key-b {
+    width: 24px;
+    height: 90px;
+    background: linear-gradient(180deg, #2a2a2a 0%, #111 100%);
+    border-radius: 0 0 5px 5px;
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    cursor: pointer;
+    transition: background 0.05s, transform 0.05s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+    border: 1px solid #000;
+    border-top: none;
+  }
+  .key-b:hover { background: linear-gradient(180deg, #3a3a3a 0%, #1a1a1a 100%); }
+  .key-b:active, .key-b.active {
+    background: linear-gradient(180deg, var(--pressed-b) 0%, #3a2a10 100%) !important;
+    transform: translateY(2px);
+  }
+
+  .key-label {
+    position: absolute;
+    bottom: 5px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 8px;
+    color: #aaa;
+    font-family: 'IBM Plex Mono', monospace;
+    pointer-events: none;
+    letter-spacing: 0;
+  }
+  .key-w.active .key-label { color: #6a5020; }
+
+  .octave-marker {
+    position: absolute;
+    bottom: -18px;
+    font-size: 8px;
+    color: var(--muted);
+    left: 0; right: 0;
+    text-align: center;
+  }
+
+  /* ── Timbre ── */
+  .timbre-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.7rem;
+  }
+  .timbre-btn {
+    font-size: 0.68rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+  }
+  .timbre-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  /* ── Preview ── */
+  .parsed-preview {
+    font-size: 0.73rem;
+    line-height: 1.9;
+    word-break: break-all;
+    max-height: 100px;
+    overflow-y: auto;
+    background: #09090c;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+    color: var(--muted2);
+  }
+  .parsed-preview::-webkit-scrollbar { width: 4px; }
+  .parsed-preview::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  .parsed-preview span.tok { display: inline-block; margin: 1px; border-radius: 3px; padding: 0 3px; transition: all 0.1s; }
+  .parsed-preview span.tok-note:hover { color: var(--text); }
+  .parsed-preview span.tok-chord { color: #8080b0; }
+  .parsed-preview span.tok-chord:hover { color: #a0a0e0; }
+  .parsed-preview span.cur { background: var(--accent-dim); color: var(--accent2); border: 1px solid rgba(201,168,76,0.3); }
+
+  .msg { font-size: 0.72rem; margin-top: 0.5rem; }
+  .msg.ok { color: var(--green); }
+  .msg.err { color: var(--red); }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── Loop indicator ── */
+  .loop-btn.loop-on { border-color: var(--green); color: var(--green); background: rgba(74,170,136,0.1); }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .bpm-row, .volume-row { margin-left: 0; }
+    .controls { flex-direction: column; align-items: stretch; }
+    .bpm-row, .volume-row { justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">🎹 Virtual Piano</div>
+  <div class="subtitle">partitura interativa &nbsp;·&nbsp; autoplay &nbsp;·&nbsp; polifonia</div>
+</header>
+
+<main>
+
+  <!-- Score input -->
+  <div class="panel">
+    <div class="panel-label">Partitura — cole sua notação</div>
+    <textarea id="score-input" spellcheck="false" placeholder="Ex: C4 [E4G4] F#3 [C3E3G3] D5 [A2E3A3] ...">[C3G4] E4 C4[G#2D4] [A2E4] [G#3E3B4] [A3A4][A2F4]-F3-C5A4 F4 [G2F3A3] G#3 [G2G3B3G4]A#4 B4 [C2C5] G4 G2 G4[F2G5] [G4E5] [C3E5] [G4D5][A2C5] A4 E2 A4[G2G5] [A#4E5] [C3E5] [F#2A#4D5] D#5[F2E5] A4 C3 A4[E2G5] [A4E5] [A2E5] [D#2A4D5][D2C5] [F4A4] [A2C5] [F4D5][G2G5] [G4A4] [G2C5] [G4D5][C2C5] G4 G2 G4[F2G5] [G4E5] [C3E5] [G4D5][A2C5] A4 E2 A4</textarea>
+
+    <div class="controls">
+      <button class="primary" id="btn-play"><i class="ti ti-player-play"></i> Play</button>
+      <button id="btn-pause" style="display:none"><i class="ti ti-player-pause"></i> Pausar</button>
+      <button class="danger" id="btn-stop"><i class="ti ti-square"></i> Stop</button>
+      <button id="btn-parse"><i class="ti ti-refresh"></i> Analisar</button>
+      <button class="loop-btn" id="btn-loop" title="Loop"><i class="ti ti-repeat"></i> Loop</button>
+
+      <div class="bpm-row">
+        <label>BPM</label>
+        <input type="range" id="bpm" min="40" max="280" value="100" step="1">
+        <span class="bpm-val" id="bpm-val">100</span>
+      </div>
+
+      <div class="volume-row">
+        <label><i class="ti ti-volume" style="font-size:14px"></i></label>
+        <input type="range" id="vol" min="0" max="100" value="70" step="1">
+        <span class="vol-val" id="vol-val">70%</span>
+      </div>
+    </div>
+
+    <!-- Timbre -->
+    <div class="timbre-row">
+      <span style="font-size:0.65rem;color:var(--muted);align-self:center;letter-spacing:0.1em">TIMBRE:</span>
+      <button class="timbre-btn active" data-timbre="triangle">Piano</button>
+      <button class="timbre-btn" data-timbre="sine">Flauта</button>
+      <button class="timbre-btn" data-timbre="square">Órgão</button>
+      <button class="timbre-btn" data-timbre="sawtooth">Sintetizador</button>
+    </div>
+
+    <div class="msg" id="parse-msg"></div>
+  </div>
+
+  <!-- Status -->
+  <div class="status-bar">
+    <div class="status-dot" id="st-dot"></div>
+    <span class="status-state" id="st-state">pronto</span>
+    <span class="status-note" id="st-note">—</span>
+    <span class="status-chord-tag" id="st-chord" style="display:none">acorde</span>
+    <span class="status-idx" id="st-idx">0 / 0</span>
+  </div>
+  <div class="prog-bar" id="prog-bar" title="Clique para navegar">
+    <div class="prog-fill" id="prog"></div>
+  </div>
+
+  <!-- Piano -->
+  <div class="panel piano-panel">
+    <div class="panel-label">Teclado — 4 oitavas (C2–B5) — clique para tocar</div>
+    <div class="piano-wrap"><div class="piano" id="piano"></div></div>
+  </div>
+
+  <!-- Preview -->
+  <div class="panel">
+    <div class="panel-label">Tokens analisados — <span id="token-count" style="color:var(--accent)">0 tokens</span></div>
+    <div class="parsed-preview" id="preview">—</div>
+  </div>
+
+  <!-- Guide -->
+  <div class="panel" style="background:transparent;border-color:var(--border)">
+    <div class="panel-label">Guia de notação</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;font-size:0.75rem;color:var(--muted2);line-height:1.8">
+      <div>
+        <div style="color:var(--accent2);margin-bottom:0.3rem">Nota simples</div>
+        <code style="color:var(--text)">C4 D#3 F#5 A2 Bb4</code><br>
+        Letra + sustenido/bemol + oitava (0–8)
+      </div>
+      <div>
+        <div style="color:var(--accent2);margin-bottom:0.3rem">Acorde</div>
+        <code style="color:var(--text)">[E4G4B4] [C3E3G3]</code><br>
+        Notas entre [ ] tocadas juntas
+      </div>
+      <div>
+        <div style="color:var(--accent2);margin-bottom:0.3rem">Separadores</div>
+        <code style="color:var(--text)">C4-E4-G4 ou C4 E4 G4</code><br>
+        Espaços e traços são ignorados
+      </div>
+      <div>
+        <div style="color:var(--accent2);margin-bottom:0.3rem">Acidentais</div>
+        <code style="color:var(--text)">C# Db G# Ab A# Bb</code><br>
+        # = sustenido, b = bemol
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Virtual Piano &nbsp;·&nbsp; Web Audio API &nbsp;·&nbsp; feito com ♪
+</footer>
+
+<script>
+(function(){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ctx = null;
+  let masterGain = null;
+
+  function getCtx(){
+    if(!ctx){
+      ctx = new AC();
+      masterGain = ctx.createGain();
+      masterGain.connect(ctx.destination);
+      masterGain.gain.value = parseFloat(document.getElementById('vol').value)/100 * 0.8;
+    }
+    if(ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const ENHARMONIC = {
+    'DB':'C#','EB':'D#','FB':'E','GB':'F#','AB':'G#','BB':'A#','CB':'B',
+    'E#':'F','B#':'C'
+  };
+
+  function noteFreq(note, oct){
+    let n = note.toUpperCase();
+    if(ENHARMONIC[n]){
+      n = ENHARMONIC[n];
+      if(n === 'C') oct++;
+    }
+    const idx = NOTE_NAMES.indexOf(n);
+    if(idx < 0) return 440;
+    const midi = (oct + 1) * 12 + idx;
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  let currentTimbre = 'triangle';
+
+  function playTone(freq, duration, when, gainVal = 0.4){
+    const c = getCtx();
+    const osc = c.createOscillator();
+    const gn = c.createGain();
+    osc.connect(gn);
+    gn.connect(masterGain);
+    osc.type = currentTimbre;
+    osc.frequency.setValueAtTime(freq, when);
+    gn.gain.setValueAtTime(0, when);
+    gn.gain.linearRampToValueAtTime(gainVal, when + 0.012);
+    gn.gain.setValueAtTime(gainVal, when + duration * 0.65);
+    gn.gain.exponentialRampToValueAtTime(0.001, when + duration);
+    osc.start(when);
+    osc.stop(when + duration + 0.05);
+  }
+
+  // ── Parser ──
+  function parseScore(text){
+    const tokens = [];
+    const src = text.replace(/[\r\n]+/g,' ').trim();
+    let i = 0;
+    while(i < src.length){
+      if(src[i] === ' ' || src[i] === '-'){ i++; continue; }
+      if(src[i] === '['){
+        const end = src.indexOf(']', i);
+        if(end < 0){ i++; continue; }
+        const inner = src.slice(i+1, end);
+        const notes = parseNoteList(inner);
+        if(notes.length) tokens.push({type:'chord', notes, raw: src.slice(i, end+1)});
+        i = end + 1;
+      } else {
+        const m = src.slice(i).match(/^([A-Ga-g][#b]?)(\d)/);
+        if(m){
+          const note = m[1].toUpperCase();
+          const oct = parseInt(m[2]);
+          tokens.push({type:'note', notes:[{note,oct}], raw: m[0]});
+          i += m[0].length;
+        } else {
+          i++;
+        }
+      }
+    }
+    return tokens;
+  }
+
+  function parseNoteList(inner){
+    const notes = [];
+    let j = 0;
+    while(j < inner.length){
+      const m = inner.slice(j).match(/^([A-Ga-g][#b]?)(\d)/);
+      if(m){
+        notes.push({note: m[1].toUpperCase(), oct: parseInt(m[2])});
+        j += m[0].length;
+      } else { j++; }
+    }
+    return notes;
+  }
+
+  // ── Piano builder ──
+  function buildPiano(){
+    const piano = document.getElementById('piano');
+    piano.innerHTML = '';
+
+    const octs = [2,3,4,5];
+    const wrapDiv = document.createElement('div');
+    wrapDiv.style.cssText = 'position:relative;display:flex;gap:1.5px';
+
+    let wIndex = 0;
+    const blackPositions = [];
+
+    octs.forEach(oct => {
+      NOTE_NAMES.forEach((n, ni) => {
+        const isBlack = n.includes('#');
+        if(!isBlack){
+          const el = document.createElement('div');
+          el.className = 'key-w';
+          el.id = keyId(n, oct);
+          el.title = n + oct;
+          const lbl = document.createElement('div');
+          lbl.className = 'key-label';
+          lbl.textContent = (n === 'C') ? n + oct : n;
+          el.appendChild(lbl);
+          el.addEventListener('mousedown', e => { e.preventDefault(); playManual(n, oct); });
+          el.addEventListener('touchstart', e => { e.preventDefault(); playManual(n, oct); }, {passive:false});
+          wrapDiv.appendChild(el);
+          wIndex++;
+        } else {
+          blackPositions.push({n, oct, wi: wIndex});
+        }
+      });
+    });
+
+    // Place black keys
+    let cumulativeW = 0;
+    let prevWasBlack = false;
+    // Rebuild to get exact pixel positions
+    const whites = Array.from(wrapDiv.querySelectorAll('.key-w'));
+    whites.forEach((w,i) => {
+      w._wIndex = i;
+    });
+
+    blackPositions.forEach(({n, oct, wi}) => {
+      const el = document.createElement('div');
+      el.className = 'key-b';
+      el.id = keyId(n, oct);
+      el.title = n + oct;
+      // Position: (wi - 0.5) * (38 + 1.5) - 12
+      const leftPx = (wi - 1) * 39.5 + 14;
+      el.style.left = leftPx + 'px';
+      el.addEventListener('mousedown', e => { e.preventDefault(); playManual(n, oct); });
+      el.addEventListener('touchstart', e => { e.preventDefault(); playManual(n, oct); }, {passive:false});
+      wrapDiv.appendChild(el);
+    });
+
+    piano.appendChild(wrapDiv);
+  }
+
+  function keyId(note, oct){
+    return 'key-' + note.replace('#','s') + oct;
+  }
+
+  function flashKey(note, oct, dur){
+    const el = document.getElementById(keyId(note, oct));
+    if(!el) return;
+    el.classList.add('active');
+    setTimeout(() => el.classList.remove('active'), dur);
+  }
+
+  function playManual(note, oct){
+    getCtx();
+    playTone(noteFreq(note, oct), 0.55, ctx.currentTime, 0.45);
+    flashKey(note, oct, 500);
+  }
+
+  // ── Playback state ──
+  let tokens = [];
+  let playing = false, paused = false, loopEnabled = false;
+  let playIdx = 0;
+  let scheduler = null;
+
+  function setDot(state){
+    const dot = document.getElementById('st-dot');
+    dot.className = 'status-dot ' + state;
+  }
+
+  function updateStatus(state, noteStr, isChord, idx){
+    document.getElementById('st-state').textContent = state;
+    document.getElementById('st-note').textContent = noteStr || '—';
+    const chordEl = document.getElementById('st-chord');
+    chordEl.style.display = isChord ? 'inline' : 'none';
+    if(tokens.length){
+      document.getElementById('st-idx').textContent = (idx+1) + ' / ' + tokens.length;
+      document.getElementById('prog').style.width = ((idx+1)/tokens.length*100) + '%';
+    }
+  }
+
+  function updatePreview(idx){
+    const el = document.getElementById('preview');
+    if(!tokens.length){ el.textContent = '—'; return; }
+    el.innerHTML = tokens.map((t, i) => {
+      const isC = t.type === 'chord';
+      const cls = 'tok ' + (isC ? 'tok-chord' : 'tok-note') + (i === idx ? ' cur' : '');
+      return `<span class="${cls}">${escHtml(t.raw)}</span>`;
+    }).join(' ');
+    const cur = el.querySelector('.cur');
+    if(cur) cur.scrollIntoView({block:'nearest'});
+  }
+
+  function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function doPlay(){
+    if(!tokens.length){
+      showMsg('Nenhum token encontrado. Verifique a partitura.', 'err');
+      return;
+    }
+    getCtx();
+    playing = true; paused = false;
+    document.getElementById('btn-play').style.display = 'none';
+    document.getElementById('btn-pause').style.display = '';
+    document.getElementById('btn-pause').innerHTML = '<i class="ti ti-player-pause"></i> Pausar';
+    setDot('playing');
+
+    const bpm = parseInt(document.getElementById('bpm').value) || 100;
+    const beatMs = 60000 / bpm;
+
+    function step(){
+      if(!playing || paused) return;
+      if(playIdx >= tokens.length){
+        if(loopEnabled){
+          playIdx = 0;
+          scheduler = setTimeout(step, beatMs);
+          return;
+        }
+        finishPlay();
+        return;
+      }
+      const tok = tokens[playIdx];
+      const notesStr = tok.notes.map(n => n.note + n.oct).join(' + ');
+      updateStatus('tocando', notesStr, tok.type === 'chord', playIdx);
+      updatePreview(playIdx);
+
+      const dur = beatMs * 0.85 / 1000;
+      tok.notes.forEach(({note, oct}) => {
+        playTone(noteFreq(note, oct), dur, ctx.currentTime, 0.38 / Math.max(1, tok.notes.length * 0.7));
+        flashKey(note, oct, beatMs * 0.75);
+      });
+
+      playIdx++;
+      scheduler = setTimeout(step, beatMs);
+    }
+    step();
+  }
+
+  function finishPlay(){
+    playing = false; paused = false;
+    document.getElementById('btn-play').style.display = '';
+    document.getElementById('btn-pause').style.display = 'none';
+    setDot('done');
+    updateStatus('concluído', '—', false, tokens.length - 1);
+  }
+
+  function stopPlay(){
+    playing = false; paused = false;
+    clearTimeout(scheduler);
+    playIdx = 0;
+    document.getElementById('btn-play').style.display = '';
+    document.getElementById('btn-pause').style.display = 'none';
+    setDot('');
+    document.getElementById('st-state').textContent = 'pronto';
+    document.getElementById('st-note').textContent = '—';
+    document.getElementById('st-chord').style.display = 'none';
+    document.getElementById('st-idx').textContent = '0 / ' + tokens.length;
+    document.getElementById('prog').style.width = '0';
+    updatePreview(-1);
+  }
+
+  function doPause(){
+    if(paused){
+      paused = false;
+      document.getElementById('btn-pause').innerHTML = '<i class="ti ti-player-pause"></i> Pausar';
+      setDot('playing');
+      const bpm = parseInt(document.getElementById('bpm').value) || 100;
+      const beatMs = 60000 / bpm;
+      function step(){
+        if(!playing || paused) return;
+        if(playIdx >= tokens.length){ if(loopEnabled){playIdx=0;scheduler=setTimeout(step,beatMs);return;} finishPlay(); return; }
+        const tok = tokens[playIdx];
+        const notesStr = tok.notes.map(n => n.note+n.oct).join(' + ');
+        updateStatus('tocando', notesStr, tok.type==='chord', playIdx);
+        updatePreview(playIdx);
+        const dur = beatMs * 0.85 / 1000;
+        tok.notes.forEach(({note,oct}) => {
+          playTone(noteFreq(note,oct), dur, ctx.currentTime, 0.38/Math.max(1,tok.notes.length*0.7));
+          flashKey(note, oct, beatMs*0.75);
+        });
+        playIdx++;
+        scheduler = setTimeout(step, beatMs);
+      }
+      step();
+    } else {
+      paused = true;
+      clearTimeout(scheduler);
+      document.getElementById('btn-pause').innerHTML = '<i class="ti ti-player-play"></i> Continuar';
+      setDot('paused');
+      document.getElementById('st-state').textContent = 'pausado';
+    }
+  }
+
+  function parseAndShow(){
+    const text = document.getElementById('score-input').value;
+    tokens = parseScore(text);
+    document.getElementById('token-count').textContent = tokens.length + ' tokens';
+    document.getElementById('st-idx').textContent = '0 / ' + tokens.length;
+    updatePreview(-1);
+    if(tokens.length){
+      showMsg('✓ ' + tokens.length + ' tokens analisados com sucesso.', 'ok');
+    } else {
+      showMsg('Nenhum token encontrado. Verifique o formato.', 'err');
+    }
+  }
+
+  function showMsg(text, type){
+    const el = document.getElementById('parse-msg');
+    el.textContent = text;
+    el.className = 'msg ' + (type || '');
+    clearTimeout(el._t);
+    if(type === 'ok') el._t = setTimeout(() => el.textContent = '', 4000);
+  }
+
+  // ── Progress bar click to seek ──
+  document.getElementById('prog-bar').addEventListener('click', function(e){
+    if(!tokens.length) return;
+    const rect = this.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    const newIdx = Math.floor(pct * tokens.length);
+    const wasPlaying = playing && !paused;
+    clearTimeout(scheduler);
+    playIdx = Math.max(0, Math.min(newIdx, tokens.length - 1));
+    document.getElementById('prog').style.width = (pct * 100) + '%';
+    if(wasPlaying) doPlay();
+  });
+
+  // ── BPM ──
+  document.getElementById('bpm').addEventListener('input', function(){
+    document.getElementById('bpm-val').textContent = this.value;
+  });
+
+  // ── Volume ──
+  document.getElementById('vol').addEventListener('input', function(){
+    document.getElementById('vol-val').textContent = this.value + '%';
+    if(masterGain) masterGain.gain.value = parseInt(this.value) / 100 * 0.8;
+  });
+
+  // ── Timbre buttons ──
+  document.querySelectorAll('.timbre-btn').forEach(btn => {
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.timbre-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentTimbre = this.dataset.timbre;
+    });
+  });
+
+  // ── Loop ──
+  document.getElementById('btn-loop').addEventListener('click', function(){
+    loopEnabled = !loopEnabled;
+    this.classList.toggle('loop-on', loopEnabled);
+    this.title = loopEnabled ? 'Loop ativado' : 'Loop';
+  });
+
+  // ── Main buttons ──
+  document.getElementById('btn-play').addEventListener('click', () => {
+    tokens = parseScore(document.getElementById('score-input').value);
+    if(!playing) playIdx = 0;
+    doPlay();
+  });
+  document.getElementById('btn-pause').addEventListener('click', doPause);
+  document.getElementById('btn-stop').addEventListener('click', stopPlay);
+  document.getElementById('btn-parse').addEventListener('click', parseAndShow);
+
+  // ── Keyboard support ──
+  const KB_MAP = {
+    'a':'C4','w':'C#4','s':'D4','e':'D#4','d':'E4','f':'F4',
+    't':'F#4','g':'G4','y':'G#4','h':'A4','u':'A#4','j':'B4',
+    'k':'C5','o':'C#5','l':'D5','p':'D#5'
+  };
+  const pressedKB = new Set();
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'TEXTAREA') return;
+    if(e.repeat) return;
+    const mapped = KB_MAP[e.key.toLowerCase()];
+    if(mapped){
+      e.preventDefault();
+      const m = mapped.match(/([A-G#]+)(\d)/);
+      if(m) playManual(m[1], parseInt(m[2]));
+    }
+    if(e.key === ' '){ e.preventDefault(); playing ? doPause() : doPlay(); }
+  });
+
+  // ── Init ──
+  buildPiano();
+  parseAndShow();
+
+})();
+</script>
+</body>
+</html>
